@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MoviMate Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #121212;
+      color: #fff;
+    }
+
+    .header {
+      padding: 30px 20px;
+      text-align: center;
+      background: linear-gradient(90deg, #ff3c00, #ff9500);
+      color: white;
+      font-size: 2rem;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .search-section {
+      text-align: center;
+      margin: 40px 20px;
+    }
+
+    .search-box {
+      padding: 12px 20px;
+      width: 60%;
+      border-radius: 8px;
+      border: none;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .search-btn {
+      padding: 12px 20px;
+      background-color: #ff3c00;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      margin-left: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    .search-btn:hover {
+      background-color: #ff5722;
+    }
+
+    .movies {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 25px;
+      padding: 40px 20px;
+    }
+
+    .movie-card {
+      background-color: #1e1e1e;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0px 5px 20px rgba(255, 61, 0, 0.2);
+      transition: transform 0.3s;
+    }
+
+    .movie-card:hover {
+      transform: translateY(-8px);
+    }
+
+    .movie-card img {
+      width: 100%;
+      height: 400px;
+      object-fit: cover;
+    }
+
+    .movie-info {
+      padding: 15px;
+    }
+
+    .movie-title {
+      font-size: 1.2rem;
+      color: #ffa500;
+      margin-bottom: 8px;
+    }
+
+    .movie-meta {
+      font-size: 0.9rem;
+      color: #ccc;
+      margin-bottom: 5px;
+    }
+
+    .movie-plot {
+      font-size: 0.9rem;
+      color: #aaa;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
+    .rating {
+      display: inline-block;
+      background-color: #ff9500;
+      color: #121212;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-right: 5px;
+    }
+
+    .detail-label {
+      color: #ff9500;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    🎥 Welcome to MoviMate Dashboard
+  </div>
+
+  <div class="search-section">
+    <input type="text" id="searchInput" class="search-box" placeholder="Search for movies...">
+    <button class="search-btn" onclick="searchMovies()">Search</button>
+  </div>
+
+  <div class="movies" id="movieResults">
+    <!-- Movie cards will be injected here -->
+  </div>
+
+  <script>
+    async function searchMovies() {
+      const query = document.getElementById('searchInput').value;
+      if (!query) return;
+      
+      const searchUrl = `https://www.omdbapi.com/?apikey=a5a989ba&s=${encodeURIComponent(query)}`;
+      const resultsContainer = document.getElementById('movieResults');
+      resultsContainer.innerHTML = '<p style="text-align:center;width:100%;">Loading movies...</p>';
+
+      try {
+        // First search for movies
+        const searchRes = await fetch(searchUrl);
+        const searchData = await searchRes.json();
+
+        if (searchData.Response === "False") {
+          resultsContainer.innerHTML = `<p style="text-align:center;width:100%;">${searchData.Error || 'No movies found 😢'}</p>`;
+          return;
+        }
+
+        if (!searchData.Search || searchData.Search.length === 0) {
+          resultsContainer.innerHTML = '<p style="text-align:center;width:100%;">No movies found 😢</p>';
+          return;
+        }
+
+        resultsContainer.innerHTML = '';
+        
+        // Get detailed info for each movie
+        for (const movie of searchData.Search) {
+          const detailUrl = `https://www.omdbapi.com/?apikey=a5a989ba&i=${movie.imdbID}&plot=full`;
+          const detailRes = await fetch(detailUrl);
+          const details = await detailRes.json();
+
+          if (details.Response === "False") continue;
+
+          const posterPath = details.Poster !== 'N/A' ? details.Poster : 'https://via.placeholder.com/300x450?text=No+Image';
+          const card = `
+            <div class="movie-card">
+              <img src="${posterPath}" alt="${details.Title}">
+              <div class="movie-info">
+                <div class="movie-title">${details.Title} (${details.Year})</div>
+                <div class="movie-meta">
+                  <span class="rating">⭐ ${details.imdbRating || 'N/A'}</span>
+                  <span>${details.Rated || 'NR'}</span> | 
+                  <span>${details.Runtime || 'N/A'}</span> | 
+                  <span>${details.Genre || 'N/A'}</span>
+                </div>
+                <div class="movie-meta">
+                  <span class="detail-label">Director:</span> ${details.Director || 'N/A'}
+                </div>
+                <div class="movie-meta">
+                  <span class="detail-label">Actors:</span> ${details.Actors || 'N/A'}
+                </div>
+                <div class="movie-meta">
+                  <span class="detail-label">Language:</span> ${details.Language || 'N/A'}
+                </div>
+                <div class="movie-meta">
+                  <span class="detail-label">Awards:</span> ${details.Awards || 'N/A'}
+                </div>
+                <div class="movie-plot">${details.Plot || 'No plot available'}</div>
+              </div>
+            </div>
+          `;
+          resultsContainer.innerHTML += card;
+        }
+      } catch (error) {
+        console.error('Error fetching movies:', error);
+        resultsContainer.innerHTML = '<p style="text-align:center;width:100%;">Error loading movies. Please try again later.</p>';
+      }
+    }
+  </script>
+</body>
+</html>

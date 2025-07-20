@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login | MoviMate</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(145deg, #1e1e1e, #2b2b2b);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #fff;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 100px auto;
+      background: #121212;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .container h2 {
+      text-align: center;
+      color: #ffffff;
+      margin-bottom: 25px;
+    }
+
+    .container h2 i {
+      color: #ffffff;
+      text-shadow: 0 0 5px #ff69b4, 0 0 5px #ff1493;
+      margin-right: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #ffa500;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: none;
+      background: #2b2b2b;
+      color: #fff;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: 2px solid #ff5722;
+      background: #333;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      background-color: #ff3c00;
+      padding: 14px;
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      background-color: #ff5722;
+      transform: translateY(-2px);
+    }
+
+    .back-link {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .back-link a {
+      color: #ffa500;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.2s;
+    }
+
+    .back-link a:hover {
+      text-decoration: underline;
+      color: #ff8c00;
+    }
+
+    #loading {
+      text-align: center;
+      margin: 15px 0;
+      display: none;
+    }
+
+    #error-message {
+      color: #ff4444;
+      text-align: center;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+
+    .forgot-password {
+      text-align: right;
+      margin-bottom: 15px;
+    }
+
+    .forgot-password a {
+      color: #aaa;
+      font-size: 13px;
+      text-decoration: none;
+      transition: 0.2s;
+    }
+
+    .forgot-password a:hover {
+      color: #ffa500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2><i class="fas fa-user"></i>Login</h2>
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="Enter your email" required>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter your password" required>
+        <div class="forgot-password">
+          <a href="#" id="forgotPassword">Forgot password?</a>
+        </div>
+      </div>
+      <div id="error-message"></div>
+      <div id="loading">
+        <i class="fas fa-spinner fa-spin"></i> Logging in...
+      </div>
+      <button type="submit" class="btn">Login</button>
+    </form>
+    <div class="back-link">
+      <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCehzTixvlERZ31PS5xL8SeMAdr7fNFXQQ",
+      authDomain: "movimate-c48ad.firebaseapp.com",
+      projectId: "movimate-c48ad",
+      storageBucket: "movimate-c48ad.appspot.com",
+      messagingSenderId: "408042653351",
+      appId: "1:408042653351:web:aaf757e374e0f3b9a73d82"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        const idToken = await userCredential.user.getIdToken();
+
+        // Send ID token to your backend to create a session
+        const res = await fetch("/sessionLogin", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ idToken })
+        });
+
+        if (res.ok) {
+          window.location.href = "/dashboard"; // redirect after session created
+        } else {
+          document.getElementById("error").innerText = "Session creation failed.";
+        }
+      } catch (err) {
+        document.getElementById("error").innerText = err.message;
+      }
+    });
+  </script>
+  </script>
+</body>
+</html>
